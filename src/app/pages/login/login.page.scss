@@ -177,3 +177,102 @@ ion-button.dex-btn {
   20%, 60% { transform: translateX(-4px); }
   40%, 80% { transform: translateX(4px); }
 }
+
+/* ---------- Registro / Google / mensajes ---------- */
+.warn,
+.ok {
+  margin: 0 0 14px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-size: 13px;
+  animation: dex-fade 300ms var(--dex-ease) both;
+}
+.warn {
+  background: rgba(255, 200, 61, 0.12);
+  border: 1px solid rgba(255, 200, 61, 0.45);
+  color: #ffe3a1;
+  code { font-size: 12px; }
+}
+.ok {
+  background: rgba(166, 243, 91, 0.1);
+  border: 1px solid rgba(166, 243, 91, 0.45);
+  color: #d8ffb4;
+}
+
+.link {
+  background: none;
+  border: 0;
+  padding: 0;
+  color: var(--dex-cyan);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  transition: opacity var(--dex-fast) var(--dex-ease);
+  &:hover { opacity: 0.8; text-decoration: underline; }
+}
+.forgot {
+  display: block;
+  margin: -4px 0 14px auto;
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 18px 0 14px;
+  &::before,
+  &::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--dex-screen-border);
+  }
+}
+
+.google {
+  width: 100%;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border-radius: 14px;
+  border: 2px solid var(--dex-screen-border);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--dex-text);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    border-color var(--dex-fast) var(--dex-ease),
+    background var(--dex-fast) var(--dex-ease),
+    transform var(--dex-fast) var(--dex-ease);
+  svg { width: 20px; height: 20px; }
+  &:hover:not(:disabled) {
+    border-color: var(--dex-cyan);
+    background: rgba(57, 215, 255, 0.08);
+    transform: translateY(-1px);
+  }
+  &:active:not(:disabled) { transform: translateY(1px); }
+  &:disabled { opacity: 0.5; cursor: default; }
+}
+
+.switch {
+  margin: 18px 0 0;
+  text-align: center;
+  font-size: 14px;
+  color: var(--dex-muted);
+  a {
+    color: var(--dex-cyan);
+    font-weight: 700;
+    text-decoration: none;
+    margin-left: 4px;
+    &:hover { text-decoration: underline; }
+  }
+}
+
+.terms {
+  margin: 4px 0 14px;
+  font-size: 12px;
+  color: var(--dex-muted);
+}

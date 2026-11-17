@@ -197,3 +197,41 @@ ion-button.dex-btn:active {
     transition-duration: 1ms !important;
   }
 }
+
+/* ---------- Reverso de carta cuando no hay imagen ---------- */
+.missing {
+  position: absolute;
+  inset: 0;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 10px;
+  text-align: center;
+  border-radius: inherit;
+  background:
+    radial-gradient(circle at 50% 40%, rgba(57, 215, 255, 0.18), transparent 55%),
+    repeating-linear-gradient(45deg, #1a2634 0 8px, #16202c 8px 16px);
+  border: 2px solid var(--dex-screen-border);
+
+  i {
+    width: 34%;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #b9f3ff 0%, #39d7ff 28%, #1270c9 62%, #0a2f6b 100%);
+    border: 3px solid #fff;
+    opacity: 0.55;
+    animation: dex-fade 400ms var(--dex-ease) both;
+  }
+  b {
+    font: 600 11px var(--dex-mono);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--dex-muted);
+  }
+}
+.no-img > .missing {
+  display: flex;
+  animation: dex-fade 300ms var(--dex-ease) both;
+}

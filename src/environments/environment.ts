@@ -1,13 +1,20 @@
-// Configuración para desarrollo (ng serve / ionic serve).
-// IMPORTANTE: aquí NO se guardan claves secretas. Ninguna de las dos APIs requiere API key.
-// Si en el futuro se usa una API con clave, debe ir en un backend propio,
-// nunca dentro del código de la app (cualquiera puede descompilar el APK/AAB).
+// Configuración para desarrollo (ng serve).
+//
+// FIREBASE: pega aquí la configuración de tu app web de Firebase
+// (Consola de Firebase → Configuración del proyecto → Tus apps → SDK config).
+// Estos valores NO son secretos: Firebase los diseñó para ir en el cliente.
+// La protección está en Authentication → Settings → Authorized domains
+// y en las reglas de seguridad de Firebase. Ver docs/SEGURIDAD.md.
 export const environment = {
   production: false,
-  // API de autenticación (login, sesión, refresh token)
-  apiUrl: 'https://dummyjson.com',
-  // Minutos de vida del accessToken solicitado a la API.
-  tokenExpiresInMins: 30,
+  firebase: {
+    apiKey: 'PEGAR_AQUI',
+    authDomain: 'PEGAR_AQUI.firebaseapp.com',
+    projectId: 'PEGAR_AQUI',
+    appId: 'PEGAR_AQUI',
+  },
+  // Backend propio (no hay por ahora). Si se agrega, el interceptor le enviará el token de Firebase.
+  apiUrl: '',
   // API del catálogo de cartas Pokémon TCG (https://tcgdex.dev)
   catalogUrl: 'https://api.tcgdex.net/v2',
   catalogLang: 'es',

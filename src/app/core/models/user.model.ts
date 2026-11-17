@@ -1,28 +1,25 @@
-/** Datos que se envían al endpoint POST /auth/login. */
+/** Datos del formulario de inicio de sesión. */
 export interface LoginRequest {
-  username: string;
+  email: string;
   password: string;
 }
 
-/** Usuario autenticado devuelto por DummyJSON. */
+/** Datos del formulario de registro. */
+export interface RegisterRequest {
+  name: string;
+  email: string;
+  password: string;
+}
+
+/** Usuario autenticado (a partir del usuario de Firebase). */
 export interface User {
-  id: number;
-  username: string;
+  /** UID de Firebase */
+  id: string;
   email: string;
   firstName: string;
   lastName: string;
-  gender: string;
+  /** Foto de perfil (Google) o avatar generado */
   image: string;
-}
-
-/** Respuesta de POST /auth/login. */
-export interface LoginResponse extends User {
-  accessToken: string;
-  refreshToken: string;
-}
-
-/** Respuesta de POST /auth/refresh. */
-export interface RefreshResponse {
-  accessToken: string;
-  refreshToken: string;
+  provider: 'password' | 'google.com' | string;
+  emailVerified: boolean;
 }

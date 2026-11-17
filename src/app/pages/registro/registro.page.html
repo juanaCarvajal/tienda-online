@@ -1,0 +1,78 @@
+<ion-content class="dex-login" [fullscreen]="true">
+  <div class="device">
+    <div class="shell-top">
+      <app-dex-lens size="lg" [busy]="loading()" />
+    </div>
+
+    <div class="hinge" aria-hidden="true"><span></span><span></span><span></span></div>
+
+    <div class="dex-screen screen">
+      <div class="scanline" aria-hidden="true"></div>
+
+      <p class="dex-label boot">Nuevo registro</p>
+      <h1>Crea tu cuenta</h1>
+      <p class="sub">Regístrate para empezar tu colección</p>
+
+      @if (!auth.configured) {
+        <p class="warn">Falta configurar Firebase en <code>src/environments/environment.ts</code>.</p>
+      }
+
+      <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+        <label class="field" [class.invalid]="invalid('name')">
+          <span class="dex-label">Nombre</span>
+          <ion-input formControlName="name" autocomplete="name" placeholder="Tu nombre" data-testid="reg-name"></ion-input>
+        </label>
+
+        <label class="field" [class.invalid]="invalid('email')">
+          <span class="dex-label">Correo</span>
+          <ion-input
+            type="email"
+            formControlName="email"
+            autocomplete="email"
+            inputmode="email"
+            autocapitalize="off"
+            placeholder="entrenador@correo.com"
+            data-testid="reg-email"
+          ></ion-input>
+        </label>
+
+        <label class="field" [class.invalid]="invalid('password')">
+          <span class="dex-label">Contraseña (mínimo 6)</span>
+          <ion-input type="password" formControlName="password" autocomplete="new-password" placeholder="••••••••" data-testid="reg-password">
+            <ion-input-password-toggle slot="end"></ion-input-password-toggle>
+          </ion-input>
+        </label>
+
+        <label class="field" [class.invalid]="invalid('confirm')">
+          <span class="dex-label">Confirmar contraseña</span>
+          <ion-input type="password" formControlName="confirm" autocomplete="new-password" placeholder="••••••••" data-testid="reg-confirm">
+            <ion-input-password-toggle slot="end"></ion-input-password-toggle>
+          </ion-input>
+        </label>
+
+        @if (error()) {
+          <p class="error" role="alert" data-testid="reg-error">{{ error() }}</p>
+        }
+
+        <ion-button class="dex-btn" expand="block" type="submit" [disabled]="loading()" data-testid="reg-submit">
+          @if (loading()) {
+            <ion-spinner name="dots"></ion-spinner>
+          } @else {
+            Crear cuenta
+          }
+        </ion-button>
+      </form>
+
+      <p class="switch">
+        ¿Ya tienes cuenta?
+        <a routerLink="/login" data-testid="go-login">Inicia sesión</a>
+      </p>
+    </div>
+
+    <div class="shell-bottom" aria-hidden="true">
+      <div class="pad"><span></span><span></span></div>
+      <div class="slots"><i></i><i></i></div>
+      <div class="round-btn"></div>
+    </div>
+  </div>
+</ion-content>

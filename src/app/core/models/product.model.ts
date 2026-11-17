@@ -12,6 +12,9 @@ export interface Product {
   thumbnail: string;
   /** Imagen grande para el detalle */
   image: string;
+  /** Respaldo: la misma carta en inglés (si la imagen en español no existe) */
+  thumbnailEn?: string;
+  imageEn?: string;
   /** Nombre de la expansión (set) */
   setName?: string;
   /** Número de la carta dentro de la expansión */
@@ -42,6 +45,19 @@ export interface Attack {
 export interface ProductPage {
   products: Product[];
   hasMore: boolean;
+  /** Total de cartas que cumplen los filtros */
+  total: number;
+}
+
+/** Filtros del catálogo */
+export interface CatalogFilters {
+  /** Expansión elegida; null = todas las expansiones */
+  setId: string | null;
+  /** Tipo de energía (Fuego, Agua...); null = todos */
+  type: string | null;
+  /** Texto para filtrar por nombre */
+  name: string;
+  sort: 'default' | 'name-asc' | 'name-desc';
 }
 
 /** Expansión (set) usada como "categoría" del catálogo */

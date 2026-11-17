@@ -15,10 +15,10 @@
   <ion-toolbar class="dex-subshell">
     <ion-searchbar
       class="dex-search"
-      placeholder="Escanear carta… (ej. Pikachu)"
-      [debounce]="500"
-      [value]="query()"
-      (ionInput)="onSearch($event)"
+      placeholder="Filtrar por nombre… (ej. Pikachu)"
+      [debounce]="400"
+      [value]="name()"
+      (ionInput)="onName($event)"
       data-testid="search"
     ></ion-searchbar>
   </ion-toolbar>
@@ -40,30 +40,100 @@
         </div>
       }
       <div class="count">
-        <span class="dex-label">{{ query() ? 'Resultados' : 'Cartas' }}</span>
-        <strong class="dex-readout">{{ products().length.toString().padStart(3, '0') }}</strong>
+        <span class="dex-label">Cartas</span>
+        <strong class="dex-readout" data-testid="total">{{ total().toString().padStart(3, '0') }}</strong>
+      </div>
+      <button
+        type="button"
+        class="filter-toggle"
+        [class.on]="showFilters()"
+        (click)="showFilters.set(!showFilters())"
+        [attr.aria-expanded]="showFilters()"
+        aria-label="Mostrar u ocultar filtros"
+        data-testid="toggle-filters"
+      >
+        <ion-icon name="options-outline"></ion-icon>
+        @if (activeCount()) { <span class="badge">{{ activeCount() }}</span> }
+      </button>
+    </section>
+
+    <!-- Panel de filtros -->
+    <section class="dex-screen filters" [class.open]="showFilters()" data-testid="filters">
+      <div class="filters-inner">
+        <div class="row">
+          <span class="dex-label">Buscar en</span>
+          <div class="segmented" role="group" aria-label="Alcance de la búsqueda">
+            <button type="button" [class.active]="!allSets()" (click)="setScope(false)" data-testid="scope-set">Esta expansión</button>
+            <button type="button" [class.active]="allSets()" (click)="setScope(true)" data-testid="scope-all">Todas</button>
+            <span class="thumb" [class.right]="allSets()" aria-hidden="true"></span>
+          </div>
+        </div>
+
+        @if (!allSets() && categories().length) {
+          <div class="row">
+            <ion-select
+              label="Expansión"
+              labelPlacement="stacked"
+              interface="action-sheet"
+              [value]="selectedSet()"
+              (ionChange)="onSet($event)"
+              data-testid="set-select"
+            >
+              @for (c of categories(); track c.id) {
+                <ion-select-option [value]="c.id">{{ c.name }}</ion-select-option>
+              }
+            </ion-select>
+          </div>
+        }
+
+        <div class="row">
+          <span class="dex-label">Tipo</span>
+          <div class="types" role="group" aria-label="Filtrar por tipo">
+            @for (t of types(); track t; let i = $index) {
+              <button
+                type="button"
+                class="type-chip"
+                [class.active]="type() === t"
+                [style.--c]="typeColor(t)"
+                [style.--i]="i"
+                [attr.aria-pressed]="type() === t"
+                (click)="toggleType(t)"
+                data-testid="type-chip"
+              >
+                <i class="dot"></i>{{ t }}
+              </button>
+            }
+          </div>
+        </div>
+
+        <div class="row inline">
+          <ion-select
+            class="sort"
+            label="Ordenar"
+            labelPlacement="start"
+            interface="popover"
+            [value]="sort()"
+            (ionChange)="onSort($event)"
+            data-testid="sort"
+          >
+            <ion-select-option value="default">Número de carta</ion-select-option>
+            <ion-select-option value="name-asc">Nombre A–Z</ion-select-option>
+            <ion-select-option value="name-desc">Nombre Z–A</ion-select-option>
+          </ion-select>
+          @if (activeCount()) {
+            <button type="button" class="clear" (click)="clearFilters()" data-testid="clear-filters">
+              <ion-icon name="close-circle"></ion-icon> Limpiar
+            </button>
+          }
+        </div>
       </div>
     </section>
 
-    @if (categories().length && !query()) {
-      <section class="dex-screen set-picker dex-rise" style="--i: 1">
-        <ion-select
-          label="Expansión"
-          labelPlacement="stacked"
-          interface="action-sheet"
-          [value]="selectedCategory()"
-          (ionChange)="onCategoryChange($event)"
-          data-testid="set-select"
-        >
-          @for (c of categories(); track c.id) {
-            <ion-select-option [value]="c.id">{{ c.name }}</ion-select-option>
-          }
-        </ion-select>
-      </section>
-    }
-
-    @if (query()) {
-      <p class="dex-label searching">Buscando "{{ query() }}" en todas las expansiones</p>
+    @if (needsCriteria()) {
+      <div class="dex-screen empty hint-box" data-testid="needs-criteria">
+        <span class="dex-label">Todas las expansiones</span>
+        <p>Escribe un nombre (mínimo 2 letras) o elige un tipo para buscar en todo el catálogo.</p>
+      </div>
     }
 
     @if (error()) {
@@ -94,7 +164,8 @@
             data-testid="product-item"
           >
             <div class="frame">
-              <img [src]="p.thumbnail" [alt]="p.title" loading="lazy" />
+              <img [src]="p.thumbnail" [alt]="p.title" loading="lazy" [appImgFallback]="[p.thumbnailEn]" />
+              <span class="missing" aria-hidden="true"><i></i><b>Imagen no disponible</b></span>
               <span class="holo" aria-hidden="true"></span>
               <span class="num">#{{ p.number }}</span>
             </div>
@@ -111,10 +182,13 @@
             </div>
           </a>
         } @empty {
-          @if (!error()) {
+          @if (!error() && !needsCriteria()) {
             <div class="dex-screen empty">
               <span class="dex-label">Sin señal</span>
-              <p>No se encontraron cartas.</p>
+              <p>No hay cartas con estos filtros.</p>
+              @if (activeCount()) {
+                <button type="button" class="clear" (click)="clearFilters()">Limpiar filtros</button>
+              }
             </div>
           }
         }

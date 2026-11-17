@@ -3,28 +3,45 @@ import { Injectable, inject } from '@angular/core';
 import { Observable, catchError, forkJoin, map, of, shareReplay, switchMap } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
-  Category, Product, ProductPage, TcgCard, TcgCardResume, TcgSet, TcgSetResume,
+  CatalogFilters, Category, Product, ProductPage, TcgCard, TcgCardResume, TcgSet, TcgSetResume,
 } from '../models/product.model';
+
+/** Tipos de energía por si la API no responde la lista. */
+const FALLBACK_TYPES = [
+  'Planta', 'Fuego', 'Agua', 'Rayo', 'Psíquico', 'Lucha', 'Oscuridad', 'Metal', 'Dragón', 'Hada', 'Incoloro',
+];
+
+/** Minúsculas y sin tildes, para comparar nombres ("Pokémon" == "pokemon"). */
+const normalize = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
 
 /**
  * Catálogo de la tienda: cartas Pokémon TCG desde la API pública TCGdex.
  * Documentación: https://tcgdex.dev  (no requiere API key, funciona por HTTPS)
  *
  * Endpoints usados:
- *   GET /v2/{lang}/sets                      -> expansiones (categorías)
- *   GET /v2/{lang}/sets/{id}                 -> cartas de una expansión
- *   GET /v2/{lang}/cards?name=...            -> búsqueda por nombre (paginada)
- *   GET /v2/{lang}/cards/{id}                -> detalle + precios de mercado
+ *   GET /v2/{lang}/sets                -> expansiones
+ *   GET /v2/{lang}/sets/{id}           -> cartas de una expansión
+ *   GET /v2/{lang}/types               -> tipos de energía
+ *   GET /v2/{lang}/types/{tipo}        -> todas las cartas de un tipo
+ *   GET /v2/{lang}/cards?name=...      -> búsqueda por nombre en todo el catálogo
+ *   GET /v2/{lang}/cards/{id}          -> detalle + precios de mercado
+ *
+ * Los filtros se combinan así:
+ *   1. Se parte de la expansión elegida (o, si es "todas", de la búsqueda por nombre o por tipo).
+ *   2. Si hay tipo, se cruza con la lista de cartas de ese tipo.
+ *   3. Si hay nombre, se filtra por nombre (sin importar tildes ni mayúsculas).
+ *   4. Se ordena y se pagina; solo se pide el detalle (precio) de las cartas de la página.
  */
 @Injectable({ providedIn: 'root' })
 export class ProductService {
   private readonly http = inject(HttpClient);
   private readonly api = `${environment.catalogUrl}/${environment.catalogLang}`;
 
-  /** Cache en memoria para no volver a pedir la misma expansión o carta. */
-  private readonly setCache = new Map<string, Observable<TcgCardResume[]>>();
+  /** Cache en memoria para no repetir peticiones. */
+  private readonly listCache = new Map<string, Observable<TcgCardResume[]>>();
   private readonly cardCache = new Map<string, Observable<Product>>();
   private categories$?: Observable<Category[]>;
+  private types$?: Observable<string[]>;
 
   /** Expansiones, de la más reciente a la más antigua. */
   getCategories(): Observable<Category[]> {
@@ -40,40 +57,38 @@ export class ProductService {
     return this.categories$;
   }
 
-  /** Cartas de una expansión, paginadas en el cliente (la API las entrega todas juntas). */
-  getByCategory(setId: string, page = 1, pageSize = 20): Observable<ProductPage> {
-    if (!this.setCache.has(setId)) {
-      this.setCache.set(
-        setId,
-        this.http.get<TcgSet>(`${this.api}/sets/${encodeURIComponent(setId)}`).pipe(
-          map((s) => (s.cards ?? []).filter((c) => !!c.image)),
-          shareReplay(1),
-        ),
-      );
-    }
-    return this.setCache.get(setId)!.pipe(
-      switchMap((cards) => {
-        const start = (page - 1) * pageSize;
-        const slice = cards.slice(start, start + pageSize);
-        return this.withDetails(slice).pipe(
-          map((products) => ({ products, hasMore: start + pageSize < cards.length })),
-        );
-      }),
+  /** Tipos de energía (Fuego, Agua, ...). */
+  getTypes(): Observable<string[]> {
+    this.types$ ??= this.http.get<string[]>(`${this.api}/types`).pipe(
+      map((t) => (Array.isArray(t) && t.length ? t : FALLBACK_TYPES)),
+      catchError(() => of(FALLBACK_TYPES)),
+      shareReplay(1),
     );
+    return this.types$;
   }
 
-  /** Búsqueda por nombre en todo el catálogo (paginada en el servidor). */
-  search(query: string, page = 1, pageSize = 20): Observable<ProductPage> {
-    const params = new HttpParams()
-      .set('name', query)
-      .set('pagination:page', page)
-      .set('pagination:itemsPerPage', pageSize);
-    return this.http.get<TcgCardResume[]>(`${this.api}/cards`, { params }).pipe(
-      switchMap((raw) =>
-        this.withDetails(raw.filter((c) => !!c.image)).pipe(
-          map((products) => ({ products, hasMore: raw.length === pageSize })),
+  /** Catálogo filtrado, ordenado y paginado. */
+  browse(f: CatalogFilters, page = 1, pageSize = 20): Observable<ProductPage> {
+    const typeIds$: Observable<Set<string> | null> = f.type ? this.typeIds(f.type) : of(null);
+    return this.baseList(f).pipe(
+      switchMap((base) =>
+        typeIds$.pipe(
+          map((typeIds): TcgCardResume[] => {
+            let list = base.filter((c) => !!c.image);
+            if (typeIds) list = list.filter((c) => typeIds.has(c.id));
+            const q = normalize(f.name);
+            if (q) list = list.filter((c) => normalize(c.name).includes(q));
+            return this.sort(list, f.sort);
+          }),
         ),
       ),
+      switchMap((list: TcgCardResume[]) => {
+        const start = (page - 1) * pageSize;
+        const slice = list.slice(start, start + pageSize);
+        return this.withDetails(slice).pipe(
+          map((products) => ({ products, hasMore: start + pageSize < list.length, total: list.length })),
+        );
+      }),
     );
   }
 
@@ -91,9 +106,58 @@ export class ProductService {
     return this.cardCache.get(id)!;
   }
 
+  // ---------------------------------------------------------------------------
+
+  /** Lista de partida según la expansión o, en "todas", según nombre o tipo. */
+  private baseList(f: CatalogFilters): Observable<TcgCardResume[]> {
+    if (f.setId) return this.cached(`set:${f.setId}`, () =>
+      this.http.get<TcgSet>(`${this.api}/sets/${encodeURIComponent(f.setId!)}`).pipe(map((s) => s.cards ?? [])));
+
+    const q = f.name.trim();
+    if (q.length >= 2) return this.cached(`name:${normalize(q)}`, () =>
+      this.http.get<TcgCardResume[]>(`${this.api}/cards`, { params: new HttpParams().set('name', q) }));
+
+    if (f.type) return this.typeList(f.type);
+
+    // "Todas las expansiones" sin nombre ni tipo: serían más de 20.000 cartas.
+    return of([]);
+  }
+
+  private typeList(type: string): Observable<TcgCardResume[]> {
+    return this.cached(`type:${type}`, () =>
+      this.http.get<{ cards?: TcgCardResume[] }>(`${this.api}/types/${encodeURIComponent(type)}`).pipe(
+        map((r) => r.cards ?? []),
+      ));
+  }
+
+  private typeIds(type: string): Observable<Set<string>> {
+    return this.typeList(type).pipe(map((cards) => new Set(cards.map((c) => c.id))));
+  }
+
+  private cached(key: string, factory: () => Observable<TcgCardResume[]>): Observable<TcgCardResume[]> {
+    if (!this.listCache.has(key)) {
+      const obs = factory().pipe(shareReplay(1));
+      // Si falla, se borra de la cache para poder reintentar.
+      this.listCache.set(key, obs.pipe(catchError((e) => {
+        this.listCache.delete(key);
+        throw e;
+      })));
+    }
+    return this.listCache.get(key)!;
+  }
+
+  private sort(list: TcgCardResume[], sort: CatalogFilters['sort']): TcgCardResume[] {
+    const byName = (a: TcgCardResume, b: TcgCardResume) => a.name.localeCompare(b.name, 'es');
+    switch (sort) {
+      case 'name-asc': return [...list].sort(byName);
+      case 'name-desc': return [...list].sort((a, b) => byName(b, a));
+      default: return list; // orden de la API (número de carta dentro de la expansión)
+    }
+  }
+
   /**
    * El listado de TCGdex solo trae id, nombre e imagen. Para mostrar precio y rareza
-   * en el catálogo se pide el detalle de cada carta de la página en paralelo.
+   * se pide el detalle de cada carta de la página en paralelo.
    * Si alguna falla, se muestra igual pero sin precio.
    */
   private withDetails(cards: TcgCardResume[]): Observable<Product[]> {
@@ -105,11 +169,16 @@ export class ProductService {
 
   private toProduct(c: TcgCard): Product {
     const { price, currency, source } = this.extractPrice(c);
+    // Algunas cartas no tienen imagen en español: se prepara la URL en inglés como respaldo.
+    const lang = environment.catalogLang;
+    const en = c.image && lang !== 'en' ? c.image.replace(`/${lang}/`, '/en/') : undefined;
     return {
       id: c.id,
       title: c.name,
       thumbnail: `${c.image}/low.webp`,
       image: `${c.image}/high.webp`,
+      thumbnailEn: en && `${en}/low.webp`,
+      imageEn: en && `${en}/high.webp`,
       setName: c.set?.name,
       number: c.localId,
       rarity: c.rarity,

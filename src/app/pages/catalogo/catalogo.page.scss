@@ -40,36 +40,14 @@ ion-content.dex-catalog {
   }
 }
 
-.set-picker {
-  padding: 2px 6px;
-  margin-bottom: 14px;
-
-  ion-select {
-    --placeholder-color: var(--dex-muted);
-    color: var(--dex-text);
-    font-weight: 600;
-    &::part(label) {
-      font-family: var(--dex-mono);
-      font-size: 11px;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-      color: var(--dex-cyan);
-    }
-    &::part(icon) { color: var(--dex-cyan); opacity: 1; }
-  }
-}
-
-.searching {
-  margin: 0 0 12px 4px;
-  color: var(--dex-cyan);
-}
-
 .error-box,
 .empty {
   padding: 16px;
   margin-bottom: 12px;
   p { margin: 6px 0 0; }
+  .clear { margin-top: 10px; }
 }
+.hint-box .dex-label { color: var(--dex-cyan); }
 .error-box .dex-label { color: #ff8080; }
 
 /* ---------- Cuadrícula de cartas ---------- */
@@ -259,4 +237,200 @@ ion-content.dex-catalog {
 
 @keyframes shimmer {
   to { transform: translateX(100%); }
+}
+
+/* ---------- Botón de filtros en el panel de estado ---------- */
+.filter-toggle {
+  position: relative;
+  width: 42px;
+  height: 42px;
+  margin-left: 4px;
+  border-radius: 12px;
+  border: 2px solid var(--dex-screen-border);
+  background: rgba(0, 0, 0, 0.25);
+  color: var(--dex-muted);
+  font-size: 20px;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: color var(--dex-fast) var(--dex-ease), border-color var(--dex-fast) var(--dex-ease),
+    transform var(--dex-fast) var(--dex-ease);
+  &.on { color: var(--dex-cyan); border-color: var(--dex-cyan); }
+  &:active { transform: scale(0.92); }
+  .badge {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 4px;
+    border-radius: 9px;
+    background: var(--dex-red);
+    color: #fff;
+    font: 700 11px/18px var(--dex-mono);
+    animation: pop 300ms var(--dex-ease-out);
+  }
+}
+
+/* ---------- Panel de filtros (se despliega con animación) ---------- */
+.filters {
+  display: grid;
+  grid-template-rows: 0fr;
+  margin-bottom: 0;
+  border-width: 0;
+  opacity: 0;
+  transition: grid-template-rows var(--dex-med) var(--dex-ease), opacity var(--dex-med) var(--dex-ease),
+    margin var(--dex-med) var(--dex-ease);
+
+  &.open {
+    grid-template-rows: 1fr;
+    margin-bottom: 14px;
+    border-width: 2px;
+    opacity: 1;
+  }
+}
+
+.filters-inner {
+  overflow: hidden;
+  min-height: 0;
+  padding: 0 14px;
+}
+.filters.open .filters-inner { padding: 12px 14px 10px; }
+
+.filters .row {
+  margin-bottom: 12px;
+  &:last-child { margin-bottom: 0; }
+  > .dex-label { display: block; margin-bottom: 6px; }
+  &.inline {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  ion-select {
+    color: var(--dex-text);
+    font-weight: 600;
+    --padding-start: 0;
+    &::part(label) {
+      font-family: var(--dex-mono);
+      font-size: 11px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--dex-cyan);
+    }
+    &::part(icon) { color: var(--dex-cyan); opacity: 1; }
+  }
+  ion-select.sort { flex: 1; max-width: 320px; }
+}
+
+/* Selector de dos opciones con "pastilla" que se desliza */
+.segmented {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  padding: 3px;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid var(--dex-screen-border);
+  max-width: 360px;
+
+  button {
+    position: relative;
+    z-index: 1;
+    padding: 8px 10px;
+    border: 0;
+    background: none;
+    color: var(--dex-muted);
+    font: 600 13px var(--ion-font-family);
+    cursor: pointer;
+    transition: color var(--dex-med) var(--dex-ease);
+    &.active { color: #06202a; }
+  }
+
+  .thumb {
+    position: absolute;
+    top: 3px;
+    bottom: 3px;
+    left: 3px;
+    width: calc(50% - 3px);
+    border-radius: 9px;
+    background: var(--dex-cyan);
+    box-shadow: 0 0 14px var(--dex-cyan-soft);
+    transition: transform var(--dex-med) var(--dex-ease);
+    &.right { transform: translateX(100%); }
+  }
+}
+
+/* Chips de tipo */
+.types {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 2px 2px 6px;
+  scrollbar-width: thin;
+}
+
+.type-chip {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1.5px solid color-mix(in srgb, var(--c) 55%, transparent);
+  background: color-mix(in srgb, var(--c) 10%, transparent);
+  color: var(--dex-text);
+  font: 600 13px var(--ion-font-family);
+  cursor: pointer;
+  animation: dex-fade 300ms var(--dex-ease) both;
+  animation-delay: calc(var(--i) * 30ms);
+  transition: background var(--dex-fast) var(--dex-ease), color var(--dex-fast) var(--dex-ease),
+    transform var(--dex-fast) var(--dex-ease), box-shadow var(--dex-med) var(--dex-ease);
+
+  .dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--c);
+  }
+
+  &:active { transform: scale(0.94); }
+  &:focus { outline: none; }
+  &:focus-visible { box-shadow: 0 0 0 3px rgba(255, 200, 61, 0.55); }
+
+  &.active {
+    background: var(--c);
+    color: #0b0f14;
+    box-shadow: 0 0 16px color-mix(in srgb, var(--c) 55%, transparent);
+    .dot { background: #0b0f14; }
+  }
+}
+
+@media (hover: hover) {
+  .type-chip:hover:not(.active) {
+    background: color-mix(in srgb, var(--c) 22%, transparent);
+    transform: translateY(-1px);
+  }
+}
+
+.clear {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 90, 90, 0.45);
+  background: rgba(255, 90, 90, 0.1);
+  color: #ffb3b3;
+  font: 600 13px var(--ion-font-family);
+  cursor: pointer;
+  transition: background var(--dex-fast) var(--dex-ease);
+  &:hover { background: rgba(255, 90, 90, 0.2); }
+}
+
+@keyframes pop {
+  from { transform: scale(0); }
+  60%  { transform: scale(1.2); }
+  to   { transform: scale(1); }
 }

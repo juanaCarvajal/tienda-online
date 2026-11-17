@@ -1,6 +1,6 @@
 import { HttpErrorResponse, HttpInterceptorFn, HttpRequest } from '@angular/common/http';
 import { inject } from '@angular/core';
-import { catchError, switchMap, throwError } from 'rxjs';
+import { catchError, from, switchMap, throwError } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { AuthService } from '../services/auth.service';
 
@@ -9,10 +9,11 @@ const withToken = (req: HttpRequest<unknown>, token: string) =>
 
 /**
  * - Bloquea cualquier petición que no sea HTTPS.
- * - Agrega el token SOLO a las peticiones hacia nuestra API (no se filtra a
- *   terceros como CDNs de imágenes).
- * - Si la API responde 401, intenta renovar el token una vez; si falla,
- *   cierra la sesión.
+ * - Agrega el token de Firebase SOLO a las peticiones hacia un backend propio
+ *   (environment.apiUrl). Nunca se envía a TCGdex ni a otros terceros.
+ * - Si ese backend responde 401, pide a Firebase un token nuevo y reintenta una vez;
+ *   si vuelve a fallar, cierra la sesión.
+ * (Firebase Authentication no pasa por aquí: su SDK maneja su propia comunicación.)
  */
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const auth = inject(AuthService);
@@ -21,20 +22,18 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
     return throwError(() => new Error(`Petición bloqueada: solo se permite HTTPS (${req.url})`));
   }
 
-  const isOurApi = req.url.startsWith(environment.apiUrl);
-  const isAuthCall = req.url.includes('/auth/login') || req.url.includes('/auth/refresh');
-  const token = auth.getAccessToken();
+  const isOurApi = !!environment.apiUrl && req.url.startsWith(environment.apiUrl);
+  if (!isOurApi) return next(req);
 
-  const request = isOurApi && !isAuthCall && token ? withToken(req, token) : req;
-
-  return next(request).pipe(
+  return from(auth.getIdToken()).pipe(
+    switchMap((token) => next(token ? withToken(req, token) : req)),
     catchError((err: unknown) => {
-      if (err instanceof HttpErrorResponse && err.status === 401 && isOurApi && !isAuthCall && token) {
-        return auth.refresh().pipe(
-          switchMap((newToken) => next(withToken(req, newToken))),
-          catchError((refreshErr) => {
+      if (err instanceof HttpErrorResponse && err.status === 401) {
+        return from(auth.getIdToken(true)).pipe(
+          switchMap((fresh) => (fresh ? next(withToken(req, fresh)) : throwError(() => err))),
+          catchError((e) => {
             auth.logout();
-            return throwError(() => refreshErr);
+            return throwError(() => e);
           }),
         );
       }

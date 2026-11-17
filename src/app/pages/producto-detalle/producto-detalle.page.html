@@ -22,7 +22,8 @@
         <!-- Carta con inclinación 3D -->
         <div class="stage">
           <div class="card3d" [appTilt]="16">
-            <img [src]="p.image" [alt]="p.title" />
+            <img [src]="p.image" [alt]="p.title" [appImgFallback]="[p.imageEn, p.thumbnail, p.thumbnailEn]" />
+            <span class="missing" aria-hidden="true"><i></i><b>Imagen no disponible</b></span>
             <span class="holo" aria-hidden="true"></span>
           </div>
           <span class="hint dex-label">Mueve el cursor o el dedo sobre la carta</span>

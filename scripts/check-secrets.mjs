@@ -25,6 +25,11 @@ function* walk(path) {
   }
 }
 
+// La configuración web de Firebase (apiKey, authDomain...) es pública por diseño:
+// se permite SOLO en src/environments/. Una clave de Google en cualquier otro archivo sí se reporta.
+const isFirebaseWebConfig = (file, line) =>
+  /src[\\/]environments[\\/]/.test(file) && /^\s*apiKey\s*:/.test(line);
+
 let findings = 0;
 for (const root of ROOTS) {
   for (const file of walk(root)) {
@@ -32,6 +37,7 @@ for (const root of ROOTS) {
     readFileSync(file, 'utf8').split('\n').forEach((line, i) => {
       for (const { name, re } of PATTERNS) {
         if (line.includes('xmlns')) continue; // espacios de nombres XML no son URLs reales
+        if (isFirebaseWebConfig(file, line)) continue;
         if (re.test(line)) {
           findings++;
           console.log(`⚠  ${name}: ${file}:${i + 1}\n   ${line.trim().slice(0, 120)}`);

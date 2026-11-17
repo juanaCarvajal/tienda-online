@@ -1,9 +1,8 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
-import { HttpErrorResponse } from '@angular/common/http';
+import { Router, RouterLink } from '@angular/router';
 import { IonButton, IonContent, IonInput, IonInputPasswordToggle, IonSpinner } from '@ionic/angular/standalone';
-import { AuthService } from '../../core/services/auth.service';
+import { AuthService, authErrorMessage } from '../../core/services/auth.service';
 import { DexLensComponent } from '../../shared/dex-lens/dex-lens.component';
 
 @Component({
@@ -12,50 +11,65 @@ import { DexLensComponent } from '../../shared/dex-lens/dex-lens.component';
   templateUrl: './login.page.html',
   styleUrls: ['./login.page.scss'],
   imports: [
-    ReactiveFormsModule, IonContent, IonInput, IonInputPasswordToggle, IonButton, IonSpinner,
-    DexLensComponent,
+    ReactiveFormsModule, RouterLink, IonContent, IonInput, IonInputPasswordToggle, IonButton,
+    IonSpinner, DexLensComponent,
   ],
 })
 export class LoginPage {
   private readonly fb = inject(FormBuilder);
-  private readonly auth = inject(AuthService);
+  readonly auth = inject(AuthService);
   private readonly router = inject(Router);
 
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
+  readonly info = signal<string | null>(null);
 
   readonly form = this.fb.nonNullable.group({
-    username: ['', [Validators.required, Validators.minLength(3)]],
-    password: ['', [Validators.required, Validators.minLength(4)]],
+    email: ['', [Validators.required, Validators.email]],
+    password: ['', [Validators.required, Validators.minLength(6)]],
   });
 
-  submit(): void {
+  async submit(): Promise<void> {
     if (this.form.invalid || this.loading()) {
       this.form.markAllAsTouched();
       return;
     }
-    this.loading.set(true);
-    this.error.set(null);
-
-    this.auth.login(this.form.getRawValue()).subscribe({
-      next: () => {
-        this.loading.set(false);
-        this.form.reset();
-        this.router.navigateByUrl('/catalogo', { replaceUrl: true });
-      },
-      error: (err: unknown) => {
-        this.loading.set(false);
-        this.error.set(this.messageFor(err));
-      },
-    });
+    await this.run(() => this.auth.login(this.form.getRawValue()));
   }
 
-  private messageFor(err: unknown): string {
-    if (err instanceof HttpErrorResponse) {
-      if (err.status === 0) return 'Sin conexión a internet. Revisa tu red e intenta de nuevo.';
-      if (err.status === 400 || err.status === 401) return 'Usuario o contraseña incorrectos.';
-      return `Error del servidor (${err.status}). Intenta más tarde.`;
+  async google(): Promise<void> {
+    if (this.loading()) return;
+    await this.run(() => this.auth.loginWithGoogle());
+  }
+
+  async forgot(): Promise<void> {
+    const email = this.form.controls.email;
+    if (email.invalid) {
+      email.markAsTouched();
+      this.error.set('Escribe tu correo arriba para enviarte el enlace de recuperación.');
+      return;
     }
-    return 'Ocurrió un error inesperado.';
+    this.error.set(null);
+    try {
+      await this.auth.resetPassword(email.value);
+      this.info.set(`Si existe una cuenta con ${email.value}, te llegará un correo para restablecer la contraseña.`);
+    } catch (e) {
+      this.error.set(authErrorMessage(e));
+    }
+  }
+
+  private async run(action: () => Promise<unknown>): Promise<void> {
+    this.loading.set(true);
+    this.error.set(null);
+    this.info.set(null);
+    try {
+      await action();
+      this.form.reset();
+      await this.router.navigateByUrl('/catalogo', { replaceUrl: true });
+    } catch (e) {
+      this.error.set(authErrorMessage(e));
+    } finally {
+      this.loading.set(false);
+    }
   }
 }
