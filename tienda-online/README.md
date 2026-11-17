@@ -1,0 +1,113 @@
+# Tienda Online de cartas Pokémon TCG – App móvil híbrida (Android)
+
+Aplicación de tienda online desarrollada con **Ionic 8 + Angular 19 + Capacitor 7** como proyecto ABP del Módulo 6 (Publicación y distribución).
+
+| Funcionalidad | Estado | Responsable |
+|---|---|---|
+| Autenticación (login, sesión, logout, refresh token) | ✅ | Integrante 1 |
+| Catálogo de cartas Pokémon TCG (expansiones, búsqueda, detalle con precio) | ✅ | Integrante 1 |
+| Seguridad (token, HTTPS, claves) | ✅ | Integrante 1 |
+| Carrito de compras + almacenamiento local | 🚧 | Integrante 2 |
+| Build Android (AAB firmado) | 🚧 | Integrante 2 |
+| Pruebas en emulador y dispositivo | 🚧 | Integrante 3 |
+
+## APIs utilizadas
+
+Ambas son públicas, funcionan por HTTPS y **no requieren API key**.
+
+**1. Autenticación – [DummyJSON](https://dummyjson.com/docs/auth)**
+
+| Uso | Método y endpoint |
+|---|---|
+| Iniciar sesión | `POST /auth/login` |
+| Usuario actual | `GET /auth/me` (requiere token) |
+| Renovar token | `POST /auth/refresh` |
+
+**Usuario de prueba:** `emilys` / `emilyspass`
+
+**2. Catálogo de cartas Pokémon TCG – [TCGdex](https://tcgdex.dev)** (en español)
+
+| Uso | Método y endpoint |
+|---|---|
+| Expansiones (categorías) | `GET /v2/es/sets` |
+| Cartas de una expansión | `GET /v2/es/sets/{id}` |
+| Buscar por nombre | `GET /v2/es/cards?name=pikachu&pagination:page=1&pagination:itemsPerPage=20` |
+| Detalle y precio | `GET /v2/es/cards/{id}` |
+
+El precio de cada carta es el precio de referencia de mercado que publica TCGdex (Cardmarket en EUR o, si no hay, TCGPlayer en USD). Las cartas sin precio se muestran como "Precio no disponible".
+
+> Se descartó pokemontcg.io porque está en desuso: no acepta registros nuevos y las claves existentes dejan de funcionar el 1 de marzo de 2027.
+
+## Diseño "Dex TCG"
+
+Interfaz propia inspirada en un escáner retro: carcasa roja, lente azul con brillo, luces LED y pantallas oscuras tipo LCD.
+
+- Catálogo en cuadrícula con inclinación 3D y brillo holográfico que sigue al cursor o al dedo (`src/app/shared/tilt.directive.ts`).
+- Lente animado reutilizable (`src/app/shared/dex-lens/`), que pulsa más rápido mientras carga.
+- Transiciones con curvas *ease-in-out*, entrada escalonada de las cartas, esqueletos de carga con barrido.
+- Respeta `prefers-reduced-motion`: si el usuario desactiva animaciones en su teléfono, se apagan.
+- Paleta y animaciones globales en `src/styles.scss`.
+
+## Estructura
+
+```
+src/app/
+├── core/
+│   ├── models/          user.model.ts, product.model.ts
+│   ├── services/        auth.service.ts, token-storage.service.ts, product.service.ts
+│   ├── interceptors/    auth.interceptor.ts   (token + HTTPS + refresh en 401)
+│   └── guards/          auth.guard.ts         (authGuard, guestGuard)
+├── shared/            dex-lens (lente animado), tilt.directive (efecto 3D)
+├── pages/
+│   ├── login/               Inicio de sesión
+│   ├── catalogo/            Lista, búsqueda, categorías, scroll infinito
+│   ├── producto-detalle/    Detalle del producto
+│   └── carrito/             (Integrante 2)
+├── app.routes.ts
+└── app.config.ts
+android/                     Proyecto nativo generado por Capacitor
+docs/                        SEGURIDAD.md, FLUJO_DE_TRABAJO.md
+scripts/check-secrets.mjs    Revisión de claves expuestas
+```
+
+## Requisitos
+
+- Node.js 20 o superior
+- Android Studio (Ladybug o superior) con SDK 35
+- JDK 21 (incluido en Android Studio)
+
+## Ejecutar
+
+```bash
+npm install
+npm start                 # navegador: http://localhost:4200
+```
+
+## Compilar para Android
+
+```bash
+npm run android:sync      # ng build --configuration production + npx cap sync android
+npm run android:open      # abre el proyecto en Android Studio
+```
+
+En Android Studio: **Build → Generate Signed App Bundle / APK → Android App Bundle**.
+
+> La carpeta `android/` ya está creada (`npx cap add android`), por eso **no** se debe volver a ejecutar `cap add`; solo `cap sync`.
+
+## Seguridad
+
+Ver [docs/SEGURIDAD.md](docs/SEGURIDAD.md). Antes de cada commit:
+
+```bash
+npm run check:secrets
+```
+
+## Ramas y forma de trabajo
+
+Ver [docs/FLUJO_DE_TRABAJO.md](docs/FLUJO_DE_TRABAJO.md).
+
+## Integrantes
+
+- Integrante 1 – Autenticación, API y repositorio
+- Integrante 2 – Carrito y build Android
+- Integrante 3 – Pruebas y documentación

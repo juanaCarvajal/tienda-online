@@ -1,0 +1,67 @@
+<ion-content class="dex-login" [fullscreen]="true">
+  <div class="device">
+    <!-- Parte superior de la carcasa -->
+    <div class="shell-top">
+      <app-dex-lens size="lg" [busy]="loading()" />
+    </div>
+
+    <!-- Bisagra -->
+    <div class="hinge" aria-hidden="true"><span></span><span></span><span></span></div>
+
+    <!-- Pantalla -->
+    <div class="dex-screen screen">
+      <div class="scanline" aria-hidden="true"></div>
+
+      <p class="dex-label boot">Sistema TCG · v1.0</p>
+      <h1>Bienvenido, entrenador</h1>
+      <p class="sub">Inicia sesión para escanear el catálogo de cartas</p>
+
+      <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+        <label class="field" [class.invalid]="form.controls.username.touched && form.controls.username.invalid">
+          <span class="dex-label">Usuario</span>
+          <ion-input
+            formControlName="username"
+            autocomplete="username"
+            autocapitalize="off"
+            placeholder="emilys"
+            data-testid="login-username"
+          ></ion-input>
+        </label>
+
+        <label class="field" [class.invalid]="form.controls.password.touched && form.controls.password.invalid">
+          <span class="dex-label">Contraseña</span>
+          <ion-input
+            type="password"
+            formControlName="password"
+            autocomplete="current-password"
+            placeholder="••••••••"
+            data-testid="login-password"
+          >
+            <ion-input-password-toggle slot="end"></ion-input-password-toggle>
+          </ion-input>
+        </label>
+
+        @if (error()) {
+          <p class="error" role="alert" data-testid="login-error">{{ error() }}</p>
+        }
+
+        <ion-button class="dex-btn" expand="block" type="submit" [disabled]="loading()" data-testid="login-submit">
+          @if (loading()) {
+            <ion-spinner name="dots"></ion-spinner>
+          } @else {
+            Ingresar
+          }
+        </ion-button>
+      </form>
+
+      <p class="hint dex-label">Prueba: <b>emilys</b> / <b>emilyspass</b></p>
+    </div>
+
+    <!-- Parte inferior decorativa -->
+    <div class="shell-bottom" aria-hidden="true">
+      <div class="pad"><span></span><span></span></div>
+      <div class="slots"><i></i><i></i></div>
+      <div class="round-btn"></div>
+    </div>
+  </div>
+</ion-content>

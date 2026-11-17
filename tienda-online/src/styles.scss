@@ -1,0 +1,199 @@
+/* Estilos base de Ionic (obligatorios) */
+@import '@ionic/angular/css/core.css';
+@import '@ionic/angular/css/normalize.css';
+@import '@ionic/angular/css/structure.css';
+@import '@ionic/angular/css/typography.css';
+
+/* Utilidades opcionales de Ionic */
+@import '@ionic/angular/css/padding.css';
+@import '@ionic/angular/css/flex-utils.css';
+@import '@ionic/angular/css/text-alignment.css';
+@import '@ionic/angular/css/display.css';
+
+/* =========================================================
+   TEMA "DEX TCG" – escáner retro de cartas
+   Carcasa roja · lente azul · pantallas LCD oscuras
+   ========================================================= */
+:root {
+  /* Paleta */
+  --dex-red: #d3202f;
+  --dex-red-dark: #9e1220;
+  --dex-red-light: #f0444f;
+  --dex-shell-shadow: rgba(80, 0, 10, 0.45);
+  --dex-screen: #121b26;
+  --dex-screen-2: #1a2634;
+  --dex-screen-border: #2b3b4f;
+  --dex-cyan: #39d7ff;
+  --dex-cyan-soft: rgba(57, 215, 255, 0.18);
+  --dex-lime: #a6f35b;
+  --dex-amber: #ffc83d;
+  --dex-text: #e8f1f8;
+  --dex-muted: #8aa0b4;
+
+  /* Movimiento */
+  --dex-ease: cubic-bezier(0.45, 0, 0.25, 1); /* ease-in-out suave */
+  --dex-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --dex-fast: 180ms;
+  --dex-med: 380ms;
+
+  --dex-mono: ui-monospace, 'SFMono-Regular', 'Roboto Mono', Menlo, Consolas, monospace;
+
+  /* Colores de Ionic */
+  --ion-color-primary: #d3202f;
+  --ion-color-primary-rgb: 211, 32, 47;
+  --ion-color-primary-contrast: #ffffff;
+  --ion-color-primary-contrast-rgb: 255, 255, 255;
+  --ion-color-primary-shade: #ba1c29;
+  --ion-color-primary-tint: #d73644;
+
+  --ion-color-secondary: #39d7ff;
+  --ion-color-secondary-rgb: 57, 215, 255;
+  --ion-color-secondary-contrast: #06202a;
+  --ion-color-secondary-contrast-rgb: 6, 32, 42;
+  --ion-color-secondary-shade: #32bde0;
+  --ion-color-secondary-tint: #4ddbff;
+
+  --ion-background-color: #0c131b;
+  --ion-background-color-rgb: 12, 19, 27;
+  --ion-text-color: #e8f1f8;
+  --ion-text-color-rgb: 232, 241, 248;
+  --ion-item-background: transparent;
+  --ion-toolbar-background: var(--dex-red);
+  --ion-toolbar-color: #fff;
+  --ion-border-color: var(--dex-screen-border);
+  --ion-font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* ---------- Carcasa roja de las barras superiores ---------- */
+ion-header.dex-header {
+  box-shadow: 0 6px 18px var(--dex-shell-shadow);
+
+  ion-toolbar.dex-shell {
+    --background: linear-gradient(180deg, var(--dex-red-light) 0%, var(--dex-red) 45%, var(--dex-red-dark) 100%);
+    --min-height: 64px;
+    --border-width: 0;
+  }
+
+  ion-toolbar.dex-subshell {
+    --background: var(--dex-red-dark);
+    --border-width: 0;
+    --padding-top: 4px;
+    --padding-bottom: 8px;
+  }
+
+  ion-title {
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    font-size: 17px;
+  }
+
+  ion-button {
+    --border-radius: 50%;
+    transition: transform var(--dex-fast) var(--dex-ease);
+  }
+  ion-button:active {
+    transform: scale(0.9);
+  }
+}
+
+/* ---------- Pantalla LCD (paneles oscuros) ---------- */
+.dex-screen {
+  position: relative;
+  background: linear-gradient(160deg, var(--dex-screen-2), var(--dex-screen));
+  border: 2px solid var(--dex-screen-border);
+  border-radius: 14px;
+  box-shadow: inset 0 0 0 3px rgba(0, 0, 0, 0.35), inset 0 0 30px rgba(57, 215, 255, 0.06);
+  overflow: hidden;
+}
+
+/* Líneas de barrido tipo monitor */
+.dex-screen::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.025) 0 1px, transparent 1px 3px);
+  mix-blend-mode: overlay;
+}
+
+.dex-label {
+  font-family: var(--dex-mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--dex-muted);
+}
+
+.dex-readout {
+  font-family: var(--dex-mono);
+  color: var(--dex-lime);
+  text-shadow: 0 0 8px rgba(166, 243, 91, 0.45);
+}
+
+/* ---------- Buscador como pantalla ---------- */
+ion-searchbar.dex-search {
+  --background: var(--dex-screen);
+  --color: var(--dex-text);
+  --placeholder-color: var(--dex-muted);
+  --icon-color: var(--dex-cyan);
+  --border-radius: 12px;
+  --box-shadow: inset 0 0 0 2px var(--dex-screen-border);
+  padding: 0 8px;
+  font-family: var(--dex-mono);
+  transition: filter var(--dex-med) var(--dex-ease);
+}
+ion-searchbar.dex-search.searchbar-has-focus {
+  --box-shadow: inset 0 0 0 2px var(--dex-cyan), 0 0 16px var(--dex-cyan-soft);
+}
+
+/* ---------- Botón principal ---------- */
+ion-button.dex-btn {
+  --background: linear-gradient(180deg, var(--dex-red-light), var(--dex-red));
+  --background-hover: var(--dex-red-light);
+  --border-radius: 14px;
+  --box-shadow: 0 6px 0 var(--dex-red-dark), 0 10px 18px rgba(0, 0, 0, 0.35);
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  height: 52px;
+  transition: transform var(--dex-fast) var(--dex-ease), filter var(--dex-fast) var(--dex-ease);
+}
+@media (hover: hover) {
+  ion-button.dex-btn:hover {
+    transform: translateY(-2px);
+    filter: brightness(1.08);
+  }
+}
+ion-button.dex-btn:active {
+  transform: translateY(4px);
+  --box-shadow: 0 2px 0 var(--dex-red-dark), 0 4px 10px rgba(0, 0, 0, 0.35);
+}
+
+/* ---------- Animaciones reutilizables ---------- */
+@keyframes dex-rise {
+  from { opacity: 0; transform: translateY(18px) scale(0.97); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes dex-fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes dex-scan {
+  0%   { transform: translateY(-100%); }
+  100% { transform: translateY(100%); }
+}
+
+.dex-rise {
+  animation: dex-rise var(--dex-med) var(--dex-ease-out) both;
+  animation-delay: calc(var(--i, 0) * 45ms);
+}
+
+/* Accesibilidad: si el usuario pidió menos movimiento, se apagan las animaciones */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+  }
+}

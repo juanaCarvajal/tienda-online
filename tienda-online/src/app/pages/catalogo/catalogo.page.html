@@ -1,0 +1,128 @@
+<ion-header class="dex-header">
+  <ion-toolbar class="dex-shell">
+    <app-dex-lens slot="start" [busy]="loading()" />
+    <ion-title>Dex TCG</ion-title>
+    <ion-buttons slot="end">
+      <!-- Integrante 2: la ruta /carrito la implementa el módulo de carrito -->
+      <ion-button routerLink="/carrito" aria-label="Carrito">
+        <ion-icon slot="icon-only" name="cart-outline"></ion-icon>
+      </ion-button>
+      <ion-button (click)="auth.logout()" aria-label="Cerrar sesión" data-testid="logout">
+        <ion-icon slot="icon-only" name="log-out-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+  <ion-toolbar class="dex-subshell">
+    <ion-searchbar
+      class="dex-search"
+      placeholder="Escanear carta… (ej. Pikachu)"
+      [debounce]="500"
+      [value]="query()"
+      (ionInput)="onSearch($event)"
+      data-testid="search"
+    ></ion-searchbar>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="dex-catalog">
+  <ion-refresher slot="fixed" (ionRefresh)="refresh($any($event))">
+    <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
+
+  <div class="wrap">
+    <!-- Panel de estado -->
+    <section class="dex-screen status dex-rise">
+      @if (auth.user(); as u) {
+        <img class="avatar" [src]="u.image" alt="" />
+        <div class="who">
+          <span class="dex-label">Entrenador</span>
+          <strong>{{ u.firstName }} {{ u.lastName }}</strong>
+        </div>
+      }
+      <div class="count">
+        <span class="dex-label">{{ query() ? 'Resultados' : 'Cartas' }}</span>
+        <strong class="dex-readout">{{ products().length.toString().padStart(3, '0') }}</strong>
+      </div>
+    </section>
+
+    @if (categories().length && !query()) {
+      <section class="dex-screen set-picker dex-rise" style="--i: 1">
+        <ion-select
+          label="Expansión"
+          labelPlacement="stacked"
+          interface="action-sheet"
+          [value]="selectedCategory()"
+          (ionChange)="onCategoryChange($event)"
+          data-testid="set-select"
+        >
+          @for (c of categories(); track c.id) {
+            <ion-select-option [value]="c.id">{{ c.name }}</ion-select-option>
+          }
+        </ion-select>
+      </section>
+    }
+
+    @if (query()) {
+      <p class="dex-label searching">Buscando "{{ query() }}" en todas las expansiones</p>
+    }
+
+    @if (error()) {
+      <div class="dex-screen error-box">
+        <span class="dex-label">Error de conexión</span>
+        <p>{{ error() }}</p>
+      </div>
+    }
+
+    @if (loading()) {
+      <div class="grid">
+        @for (i of [0, 1, 2, 3, 4, 5]; track i) {
+          <div class="tile skeleton" [style.--i]="i">
+            <div class="frame"></div>
+            <div class="bar w70"></div>
+            <div class="bar w40"></div>
+          </div>
+        }
+      </div>
+    } @else {
+      <div class="grid">
+        @for (p of products(); track p.id; let i = $index) {
+          <a
+            class="tile dex-rise"
+            [style.--i]="i % 20"
+            [routerLink]="['/producto', p.id]"
+            [appTilt]="10"
+            data-testid="product-item"
+          >
+            <div class="frame">
+              <img [src]="p.thumbnail" [alt]="p.title" loading="lazy" />
+              <span class="holo" aria-hidden="true"></span>
+              <span class="num">#{{ p.number }}</span>
+            </div>
+            <div class="info">
+              <h3>{{ p.title }}</h3>
+              @if (p.rarity) { <span class="rarity">{{ p.rarity }}</span> }
+              <span class="price">
+                @if (p.price !== null) {
+                  <span class="dex-readout">{{ p.price | currency: p.currency }}</span>
+                } @else {
+                  <span class="na">Sin precio</span>
+                }
+              </span>
+            </div>
+          </a>
+        } @empty {
+          @if (!error()) {
+            <div class="dex-screen empty">
+              <span class="dex-label">Sin señal</span>
+              <p>No se encontraron cartas.</p>
+            </div>
+          }
+        }
+      </div>
+    }
+  </div>
+
+  <ion-infinite-scroll [disabled]="!hasMore() || loading()" (ionInfinite)="loadMore($any($event))">
+    <ion-infinite-scroll-content loadingSpinner="dots" loadingText="Escaneando más cartas…"></ion-infinite-scroll-content>
+  </ion-infinite-scroll>
+</ion-content>

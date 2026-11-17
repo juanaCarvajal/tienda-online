@@ -1,0 +1,118 @@
+<ion-header class="dex-header">
+  <ion-toolbar class="dex-shell">
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/catalogo" text=""></ion-back-button>
+    </ion-buttons>
+    <ion-title>{{ product()?.title ?? 'Escaneando…' }}</ion-title>
+    <app-dex-lens slot="end" [busy]="!product() && !error()" />
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="dex-detail">
+  @if (error()) {
+    <div class="wrap">
+      <div class="dex-screen panel">
+        <span class="dex-label err">Error</span>
+        <p>{{ error() }}</p>
+      </div>
+    </div>
+  } @else {
+    @if (product(); as p) {
+      <div class="wrap layout">
+        <!-- Carta con inclinación 3D -->
+        <div class="stage">
+          <div class="card3d" [appTilt]="16">
+            <img [src]="p.image" [alt]="p.title" />
+            <span class="holo" aria-hidden="true"></span>
+          </div>
+          <span class="hint dex-label">Mueve el cursor o el dedo sobre la carta</span>
+        </div>
+
+        <!-- Pantalla de datos -->
+        <div class="data">
+          <section class="dex-screen panel slide" style="--i: 0">
+            <span class="dex-label">{{ p.setName }} · #{{ p.number }}</span>
+            <h1>{{ p.title }}</h1>
+            <div class="price-row">
+              @if (p.price !== null) {
+                <span class="dex-readout big">{{ p.price | currency: p.currency }}</span>
+                <span class="dex-label">Ref. {{ p.priceSource }}</span>
+              } @else {
+                <span class="na">Precio no disponible</span>
+              }
+            </div>
+            <!--
+              Integrante 2: aquí va el botón "Agregar al carrito", por ejemplo:
+              <ion-button class="dex-btn" expand="block" [disabled]="p.price === null" (click)="cart.add(p)">
+                Agregar al carrito
+              </ion-button>
+            -->
+          </section>
+
+          <section class="dex-screen panel stats slide" style="--i: 1">
+            @if (p.types?.length) {
+              <div class="row">
+                <span class="dex-label">Tipo</span>
+                <span class="types">
+                  @for (t of p.types; track t) {
+                    <span class="type" [style.--c]="typeColor(t)">{{ t }}</span>
+                  }
+                </span>
+              </div>
+            }
+            @if (p.hp) {
+              <div class="row">
+                <span class="dex-label">PS</span>
+                <span class="hp">
+                  <span class="dex-readout">{{ p.hp }}</span>
+                  <span class="meter"><span [style.width.%]="hpPercent(p.hp)"></span></span>
+                </span>
+              </div>
+            }
+            @if (p.rarity) {
+              <div class="row"><span class="dex-label">Rareza</span><span>{{ p.rarity }}</span></div>
+            }
+            @if (p.category) {
+              <div class="row"><span class="dex-label">Categoría</span><span>{{ p.category }}</span></div>
+            }
+            @if (p.illustrator) {
+              <div class="row"><span class="dex-label">Ilustración</span><span>{{ p.illustrator }}</span></div>
+            }
+          </section>
+
+          @if (p.description) {
+            <section class="dex-screen panel slide" style="--i: 2">
+              <span class="dex-label">Descripción</span>
+              <p class="desc">{{ p.description }}</p>
+            </section>
+          }
+
+          @if (p.attacks?.length) {
+            <section class="dex-screen panel slide" style="--i: 3">
+              <span class="dex-label">Ataques</span>
+              @for (a of p.attacks; track a.name; let i = $index) {
+                <div class="attack slide" [style.--i]="i + 4">
+                  <div class="attack-head">
+                    <span class="cost">
+                      @for (c of a.cost ?? []; track $index) {
+                        <i class="energy" [style.--c]="typeColor(c)" [title]="c"></i>
+                      }
+                    </span>
+                    <strong>{{ a.name }}</strong>
+                    @if (a.damage) { <span class="dmg dex-readout">{{ a.damage }}</span> }
+                  </div>
+                  @if (a.effect) { <p>{{ a.effect }}</p> }
+                </div>
+              }
+            </section>
+          }
+        </div>
+      </div>
+    } @else {
+      <div class="loading">
+        <app-dex-lens size="lg" [busy]="true" />
+        <span class="dex-label">Escaneando carta…</span>
+      </div>
+    }
+  }
+</ion-content>
