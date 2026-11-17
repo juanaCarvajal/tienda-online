@@ -8,10 +8,10 @@
 export const environment = {
   production: false,
   firebase: {
-    apiKey: 'PEGAR_AQUI',
-    authDomain: 'PEGAR_AQUI.firebaseapp.com',
-    projectId: 'PEGAR_AQUI',
-    appId: 'PEGAR_AQUI',
+    apiKey: 'AIzaSyB8mCbWYOmvceM98B8Ddex9B2JYeTR_hhs',
+    authDomain: 'tienda-online-160c6.firebaseapp.com',
+    projectId: 'tienda-online-160c6',
+    appId: '1:448220184942:web:a9fc8ac346667a46fc017f',
   },
   // Backend propio (no hay por ahora). Si se agrega, el interceptor le enviará el token de Firebase.
   apiUrl: '',
