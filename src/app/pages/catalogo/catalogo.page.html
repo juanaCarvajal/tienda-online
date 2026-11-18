@@ -6,6 +6,9 @@
       <!-- Integrante 2: la ruta /carrito la implementa el módulo de carrito -->
       <ion-button routerLink="/carrito" aria-label="Carrito">
         <ion-icon slot="icon-only" name="cart-outline"></ion-icon>
+        @if (cartService.totalItems() > 0) {
+        <ion-badge color="warning" style="margin-left: 4px;">{{ cartService.totalItems() }}</ion-badge>
+        }
       </ion-button>
       <ion-button (click)="auth.logout()" aria-label="Cerrar sesión" data-testid="logout">
         <ion-icon slot="icon-only" name="log-out-outline"></ion-icon>
