@@ -4,7 +4,15 @@
       <ion-back-button defaultHref="/catalogo" text=""></ion-back-button>
     </ion-buttons>
     <ion-title>{{ product()?.title ?? 'Escaneando…' }}</ion-title>
-    <app-dex-lens slot="end" [busy]="!product() && !error()" />
+    <ion-buttons slot="end">
+      <ion-button routerLink="/carrito" aria-label="Ver carrito">
+        <ion-icon slot="icon-only" name="cart-outline"></ion-icon>
+        @if (cartService.totalItems() > 0) {
+        <ion-badge color="warning" style="margin-left: 4px;">{{ cartService.totalItems() }}</ion-badge>
+        }
+      </ion-button>
+      <app-dex-lens [busy]="!product() && !error()" />
+    </ion-buttons>
   </ion-toolbar>
 </ion-header>
 
@@ -43,11 +51,18 @@
               }
             </div>
             <!--
-              Integrante 2: aquí va el botón "Agregar al carrito", por ejemplo:
-              <ion-button class="dex-btn" expand="block" [disabled]="p.price === null" (click)="cart.add(p)">
-                Agregar al carrito
-              </ion-button>
+              Integrante 2: aquí va el botón "Agregar al carrito"
             -->
+            <ion-button
+                    class="dex-btn"
+                    expand="block"
+                    style="margin-top: 14px;"
+                    [disabled]="p.price === null"
+                    (click)="addToCart(p)"
+            >
+              Agregar al carrito
+            </ion-button>
+
           </section>
 
           <section class="dex-screen panel stats slide" style="--i: 1">

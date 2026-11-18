@@ -2,7 +2,7 @@ import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { CurrencyPipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import {
-  IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonInfiniteScroll,
+  IonBadge, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonInfiniteScroll,
   IonInfiniteScrollContent, IonRefresher, IonRefresherContent, IonSearchbar, IonSelect,
   IonSelectOption, IonTitle, IonToolbar, InfiniteScrollCustomEvent, RefresherCustomEvent,
 } from '@ionic/angular/standalone';
@@ -10,6 +10,7 @@ import { addIcons } from 'ionicons';
 import { cartOutline, logOutOutline, closeCircle, optionsOutline } from 'ionicons/icons';
 import { CatalogFilters, Category, Product, ProductPage } from '../../core/models/product.model';
 import { AuthService } from '../../core/services/auth.service';
+import { CartService } from '../../core/services/cart.service';
 import { ProductService } from '../../core/services/product.service';
 import { DexLensComponent } from '../../shared/dex-lens/dex-lens.component';
 import { TiltDirective } from '../../shared/tilt.directive';
@@ -25,7 +26,7 @@ const PAGE_SIZE = 20;
   styleUrls: ['./catalogo.page.scss'],
   imports: [
     CurrencyPipe, RouterLink, IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonIcon,
-    IonContent, IonSearchbar, IonInfiniteScroll, IonInfiniteScrollContent, IonRefresher,
+    IonBadge, IonContent, IonSearchbar, IonInfiniteScroll, IonInfiniteScrollContent, IonRefresher,
     IonRefresherContent, IonSelect, IonSelectOption, DexLensComponent, TiltDirective,
     ImgFallbackDirective,
   ],
@@ -33,6 +34,7 @@ const PAGE_SIZE = 20;
 export class CatalogoPage implements OnInit {
   private readonly productService = inject(ProductService);
   readonly auth = inject(AuthService);
+  readonly cartService = inject(CartService);
   readonly typeColor = typeColor;
 
   // Datos

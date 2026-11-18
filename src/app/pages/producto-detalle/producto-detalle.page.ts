@@ -1,16 +1,27 @@
 import { Component, OnInit, inject, input, signal } from '@angular/core';
 import { CurrencyPipe } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import {
-  IonBackButton, IonButtons, IonContent, IonHeader, IonTitle, IonToolbar,
+  IonBackButton,
+  IonBadge,
+  IonButton,
+  IonButtons,
+  IonContent,
+  IonHeader,
+  IonIcon,
+  IonTitle,
+  IonToolbar,
+  ToastController,
 } from '@ionic/angular/standalone';
+import { addIcons } from 'ionicons';
+import { cartOutline } from 'ionicons/icons';
 import { Product } from '../../core/models/product.model';
 import { ProductService } from '../../core/services/product.service';
+import { CartService } from '../../core/services/cart.service';
 import { DexLensComponent } from '../../shared/dex-lens/dex-lens.component';
 import { TiltDirective } from '../../shared/tilt.directive';
 import { typeColor } from '../../shared/type-colors';
 import { ImgFallbackDirective } from '../../shared/img-fallback.directive';
-
-
 
 @Component({
   selector: 'app-producto-detalle',
@@ -18,18 +29,36 @@ import { ImgFallbackDirective } from '../../shared/img-fallback.directive';
   templateUrl: './producto-detalle.page.html',
   styleUrls: ['./producto-detalle.page.scss'],
   imports: [
-    CurrencyPipe, IonHeader, IonToolbar, IonTitle, IonButtons, IonBackButton, IonContent,
-    DexLensComponent, TiltDirective, ImgFallbackDirective,
+    CurrencyPipe,
+    RouterLink,
+    IonHeader,
+    IonToolbar,
+    IonTitle,
+    IonButtons,
+    IonBackButton,
+    IonButton,
+    IonIcon,
+    IonBadge,
+    IonContent,
+    DexLensComponent,
+    TiltDirective,
+    ImgFallbackDirective,
   ],
 })
 export class ProductoDetallePage implements OnInit {
   private readonly productService = inject(ProductService);
+  private readonly toastCtrl = inject(ToastController);
+  readonly cartService = inject(CartService);
 
   /** Viene del parámetro de ruta /producto/:id (withComponentInputBinding). */
   readonly id = input.required<string>();
 
   readonly product = signal<Product | null>(null);
   readonly error = signal<string | null>(null);
+
+  constructor() {
+    addIcons({ cartOutline });
+  }
 
   ngOnInit(): void {
     const id = this.id();
@@ -42,6 +71,17 @@ export class ProductoDetallePage implements OnInit {
       next: (p) => this.product.set(p),
       error: () => this.error.set('No se pudo cargar la carta.'),
     });
+  }
+
+  async addToCart(product: Product): Promise<void> {
+    await this.cartService.addItem(product, 1);
+    const toast = await this.toastCtrl.create({
+      message: `${product.title} agregada al carrito`,
+      duration: 1800,
+      position: 'bottom',
+      color: 'success',
+    });
+    await toast.present();
   }
 
   readonly typeColor = typeColor;
