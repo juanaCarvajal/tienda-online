@@ -124,7 +124,9 @@ import { CartService } from '../../core/services/cart.service';
           <div class="checkout-bar">
             <div>
               <small>Total estimado</small>
-              <h3>{{ cartService.totalPrice() | currency: 'EUR' }}</h3>
+              @for (t of cartService.totals(); track t.currency) {
+                <h3 data-testid="cart-total">{{ t.amount | currency: t.currency }}</h3>
+              }
             </div>
             <ion-button color="primary" (click)="checkout()">
               <ion-icon slot="start" name="bag-check-outline"></ion-icon>
